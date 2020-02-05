@@ -148,3 +148,7 @@ variable "vpc_id" {
   default     = null
 }
 
+variable "targets" {
+  description = "EC2 target id"
+  type = list(string)
+}

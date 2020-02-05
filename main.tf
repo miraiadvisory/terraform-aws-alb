@@ -142,3 +142,13 @@ resource "aws_lb_listener_certificate" "https_listener" {
   certificate_arn = var.extra_ssl_certs[count.index]["certificate_arn"]
 }
 
+locals{
+    target_reference = { for t in var.targets : t => t }
+}
+
+resource "aws_lb_target_group_attachment" "this_attachment" {
+  target_group_arn = aws_lb_target_group.main[0].arn
+  port             = 80
+  for_each   = local.target_reference
+  target_id = each.value
+}
