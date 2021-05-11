@@ -4,6 +4,12 @@ variable "create_lb" {
   default     = true
 }
 
+variable "drop_invalid_header_fields" {
+  description = "Indicates whether invalid header fields are dropped in application load balancers. Defaults to false."
+  type        = bool
+  default     = false
+}
+
 variable "enable_deletion_protection" {
   description = "If true, deletion of the load balancer will be disabled via the AWS API. This will prevent Terraform from deleting the load balancer. Defaults to false."
   type        = bool
@@ -29,14 +35,20 @@ variable "extra_ssl_certs" {
 }
 
 variable "https_listeners" {
-  description = "A list of maps describing the HTTPS listeners for this ALB. Required key/values: port, certificate_arn. Optional key/values: ssl_policy (defaults to ELBSecurityPolicy-2016-08), target_group_index (defaults to 0)"
-  type        = list(map(string))
+  description = "A list of maps describing the HTTPS listeners for this ALB. Required key/values: port, certificate_arn. Optional key/values: ssl_policy (defaults to ELBSecurityPolicy-2016-08), target_group_index (defaults to https_listeners[count.index])"
+  type        = any
   default     = []
 }
 
 variable "http_tcp_listeners" {
-  description = "A list of maps describing the HTTP listeners for this ALB. Required key/values: port, protocol. Optional key/values: target_group_index (defaults to 0)"
-  type        = list(map(string))
+  description = "A list of maps describing the HTTP listeners or TCP ports for this ALB. Required key/values: port, protocol. Optional key/values: target_group_index (defaults to http_tcp_listeners[count.index])"
+  type        = any
+  default     = []
+}
+
+variable "https_listener_rules" {
+  description = "A list of maps describing the Listener Rules for this ALB. Required key/values: actions, conditions. Optional key/values: priority, https_listener_index (default to https_listeners[count.index])"
+  type        = any
   default     = []
 }
 
@@ -83,7 +95,7 @@ variable "name" {
 }
 
 variable "name_prefix" {
-  description = "The resource name prefix and Name tag of the load balancer."
+  description = "The resource name prefix and Name tag of the load balancer. Cannot be longer than 6 characters"
   type        = string
   default     = null
 }
@@ -106,12 +118,6 @@ variable "access_logs" {
   default     = {}
 }
 
-variable "log_location_prefix" {
-  description = "S3 prefix within the log_bucket_name under which logs are stored."
-  type        = string
-  default     = ""
-}
-
 variable "subnets" {
   description = "A list of subnets to associate with the load balancer. e.g. ['subnet-1a2b3c4d','subnet-1a2b3c4e','subnet-1a2b3c4f']"
   type        = list(string)
@@ -130,16 +136,32 @@ variable "tags" {
   default     = {}
 }
 
+variable "lb_tags" {
+  description = "A map of tags to add to load balancer"
+  type        = map(string)
+  default     = {}
+}
+
+variable "target_group_tags" {
+  description = "A map of tags to add to all target groups"
+  type        = map(string)
+  default     = {}
+}
+
 variable "security_groups" {
   description = "The security groups to attach to the load balancer. e.g. [\"sg-edcd9784\",\"sg-edcd9785\"]"
   type        = list(string)
   default     = []
 }
 
+variable "target_groups" {
+  description = "A list of maps containing key/value pairs that define the target groups to be created. Order of these maps is important and the index of these are to be referenced in listener definitions. Required key/values: name, backend_protocol, backend_port"
+  type        = any
+  default     = []
+}
 
 variable "vpc_id" {
   description = "VPC id where the load balancer and other resources will be deployed."
   type        = string
   default     = null
 }
-

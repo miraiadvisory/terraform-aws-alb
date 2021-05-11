@@ -25,19 +25,17 @@ data "aws_route53_zone" "this" {
   name = local.domain_name
 }
 
-//module "log_bucket" {
-//  source  = "terraform-aws-modules/s3-bucket/aws"
-//  version = "~> 1.0"
-//
-//  bucket                         = "logs-${random_pet.this.id}"
-//  acl                            = "log-delivery-write"
-//  force_destroy                  = true
-//  attach_elb_log_delivery_policy = true
-//}
+# module "log_bucket" {
+#   source  = "terraform-aws-modules/s3-bucket/aws"
+#
+#   bucket                         = "logs-${random_pet.this.id}"
+#   acl                            = "log-delivery-write"
+#   force_destroy                  = true
+#   attach_elb_log_delivery_policy = true
+# }
 
 module "acm" {
-  source  = "terraform-aws-modules/acm/aws"
-  version = "~> 2.0"
+  source = "terraform-aws-modules/acm/aws"
 
   domain_name = local.domain_name # trimsuffix(data.aws_route53_zone.this.name, ".") # Terraform >= 0.12.17
   zone_id     = data.aws_route53_zone.this.id
@@ -61,19 +59,19 @@ module "nlb" {
 
   vpc_id = data.aws_vpc.default.id
 
-  //  Use `subnets` if you don't want to attach EIPs
-  //  subnets = tolist(data.aws_subnet_ids.all.ids)
+  #   Use `subnets` if you don't want to attach EIPs
+  #   subnets = tolist(data.aws_subnet_ids.all.ids)
 
-  //  Use `subnet_mapping` to attach EIPs
+  #   Use `subnet_mapping` to attach EIPs
   subnet_mapping = [for i, eip in aws_eip.this : { allocation_id : eip.id, subnet_id : tolist(data.aws_subnet_ids.all.ids)[i] }]
 
-  //  # See notes in README (ref: https://github.com/terraform-providers/terraform-provider-aws/issues/7987)
-  //  access_logs = {
-  //    bucket = module.log_bucket.this_s3_bucket_id
-  //  }
+  #   # See notes in README (ref: https://github.com/terraform-providers/terraform-provider-aws/issues/7987)
+  #   access_logs = {
+  #     bucket = module.log_bucket.s3_bucket_id
+  #   }
 
 
-  // TCP_UDP, UDP, TCP
+  #  TCP_UDP, UDP, TCP
   http_tcp_listeners = [
     {
       port               = 81
@@ -92,12 +90,12 @@ module "nlb" {
     },
   ]
 
-  // TLS
+  #  TLS
   https_listeners = [
     {
       port               = 84
       protocol           = "TLS"
-      certificate_arn    = module.acm.this_acm_certificate_arn
+      certificate_arn    = module.acm.acm_certificate_arn
       target_group_index = 3
     },
   ]
@@ -108,6 +106,9 @@ module "nlb" {
       backend_protocol = "TCP_UDP"
       backend_port     = 81
       target_type      = "instance"
+      tags = {
+        tcp_udp = true
+      }
     },
     {
       name_prefix      = "u1-"
