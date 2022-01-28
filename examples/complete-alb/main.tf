@@ -248,7 +248,75 @@ module "alb" {
     },
     {
       https_listener_index = 0
+      priority             = 4
+
+      actions = [{
+        type = "weighted-forward"
+        target_groups = [
+          {
+            target_group_index = 1
+            weight             = 2
+          },
+          {
+            target_group_index = 0
+            weight             = 1
+          }
+        ]
+        stickiness = {
+          enabled  = true
+          duration = 3600
+        }
+      }]
+
+      conditions = [{
+        query_strings = [{
+          key   = "weighted"
+          value = "true"
+        }]
+      }]
+    },
+    {
+      https_listener_index = 0
       priority             = 5000
+      actions = [{
+        type        = "redirect"
+        status_code = "HTTP_302"
+        host        = "www.youtube.com"
+        path        = "/watch"
+        query       = "v=dQw4w9WgXcQ"
+        protocol    = "HTTPS"
+      }]
+
+      conditions = [{
+        query_strings = [{
+          key   = "video"
+          value = "random"
+        }]
+      }]
+    },
+  ]
+
+  http_tcp_listener_rules = [
+    {
+      http_tcp_listener_index = 0
+      priority                = 3
+      actions = [{
+        type         = "fixed-response"
+        content_type = "text/plain"
+        status_code  = 200
+        message_body = "This is a fixed response"
+      }]
+
+      conditions = [{
+        http_headers = [{
+          http_header_name = "x-Gimme-Fixed-Response"
+          values           = ["yes", "please", "right now"]
+        }]
+      }]
+    },
+    {
+      http_tcp_listener_index = 0
+      priority                = 5000
       actions = [{
         type        = "redirect"
         status_code = "HTTP_302"
@@ -327,6 +395,18 @@ module "alb" {
 
   target_group_tags = {
     MyGlobalTargetGroupTag = "bar"
+  }
+
+  https_listener_rules_tags = {
+    MyLoadBalancerHTTPSListenerRule = "bar"
+  }
+
+  https_listeners_tags = {
+    MyLoadBalancerHTTPSListener = "bar"
+  }
+
+  http_tcp_listeners_tags = {
+    MyLoadBalancerTCPListener = "bar"
   }
 }
 
