@@ -2,6 +2,8 @@
 
 Terraform module which creates Application and Network Load Balancer resources on AWS.
 
+[![SWUbanner](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner2-direct.svg)](https://github.com/vshymanskyy/StandWithUkraine/blob/main/docs/README.md)
+
 ## Usage
 
 ### Application Load Balancer
@@ -31,16 +33,16 @@ module "alb" {
       backend_protocol = "HTTP"
       backend_port     = 80
       target_type      = "instance"
-      targets = [
-        {
+      targets = {
+        my_target = {
           target_id = "i-0123456789abcdefg"
           port = 80
-        },
-        {
+        }
+        my_other_target = {
           target_id = "i-a1b2c3d4e5f6g7h8i"
           port = 8080
         }
-      ]
+      }
     }
   ]
 
@@ -266,7 +268,7 @@ It's recommended you use this module with [terraform-aws-vpc](https://registry.t
 
 ## Notes
 
-1. Terraform AWS provider >= v2.39.0 (via Terraform >= 0.12) has [issue #16674](https://github.com/hashicorp/terraform-provider-aws/issues/16674) related to "Provider produced inconsistent final plan". It means that S3 bucket has to be created before referencing it as an argument inside `access_logs = { bucket = "my-already-created-bucket-for-logs" }`, so this won't work: `access_logs = { bucket = module.log_bucket.s3_bucket_id }`.
+1. Terraform AWS provider version v2.39.0 and newer has [issue #16674](https://github.com/hashicorp/terraform-provider-aws/issues/16674) related to "Provider produced inconsistent final plan". It means that S3 bucket has to be created before referencing it as an argument inside `access_logs = { bucket = "my-already-created-bucket-for-logs" }`, so this won't work: `access_logs = { bucket = module.log_bucket.s3_bucket_id }`.
 
 ## Conditional creation
 
@@ -292,7 +294,7 @@ module "lb" {
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 0.13.1 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0.0 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 3.67 |
 
 ## Providers
@@ -309,6 +311,7 @@ No modules.
 
 | Name | Type |
 |------|------|
+| [aws_lambda_permission.lb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_permission) | resource |
 | [aws_lb.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb) | resource |
 | [aws_lb_listener.frontend_http_tcp](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener) | resource |
 | [aws_lb_listener.frontend_https](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener) | resource |
@@ -350,6 +353,7 @@ No modules.
 | <a name="input_load_balancer_update_timeout"></a> [load\_balancer\_update\_timeout](#input\_load\_balancer\_update\_timeout) | Timeout value when updating the ALB. | `string` | `"10m"` | no |
 | <a name="input_name"></a> [name](#input\_name) | The resource name and Name tag of the load balancer. | `string` | `null` | no |
 | <a name="input_name_prefix"></a> [name\_prefix](#input\_name\_prefix) | The resource name prefix and Name tag of the load balancer. Cannot be longer than 6 characters | `string` | `null` | no |
+| <a name="input_putin_khuylo"></a> [putin\_khuylo](#input\_putin\_khuylo) | Do you agree that Putin doesn't respect Ukrainian sovereignty and territorial integrity? More info: https://en.wikipedia.org/wiki/Putin_khuylo! | `bool` | `true` | no |
 | <a name="input_security_groups"></a> [security\_groups](#input\_security\_groups) | The security groups to attach to the load balancer. e.g. ["sg-edcd9784","sg-edcd9785"] | `list(string)` | `[]` | no |
 | <a name="input_subnet_mapping"></a> [subnet\_mapping](#input\_subnet\_mapping) | A list of subnet mapping blocks describing subnets to attach to network load balancer | `list(map(string))` | `[]` | no |
 | <a name="input_subnets"></a> [subnets](#input\_subnets) | A list of subnets to associate with the load balancer. e.g. ['subnet-1a2b3c4d','subnet-1a2b3c4e','subnet-1a2b3c4f'] | `list(string)` | `null` | no |
@@ -384,3 +388,9 @@ Module is maintained by [Anton Babenko](https://github.com/antonbabenko) with he
 ## License
 
 Apache 2 Licensed. See [LICENSE](https://github.com/terraform-aws-modules/terraform-aws-alb/tree/master/LICENSE) for full details.
+
+## Additional information for users from Russia and Belarus
+
+* Russia has [illegally annexed Crimea in 2014](https://en.wikipedia.org/wiki/Annexation_of_Crimea_by_the_Russian_Federation) and [brought the war in Donbas](https://en.wikipedia.org/wiki/War_in_Donbas) followed by [full-scale invasion of Ukraine in 2022](https://en.wikipedia.org/wiki/2022_Russian_invasion_of_Ukraine).
+* Russia has brought sorrow and devastations to millions of Ukrainians, killed hundreds of innocent people, damaged thousands of buildings, and forced several million people to flee.
+* [Putin khuylo!](https://en.wikipedia.org/wiki/Putin_khuylo!)

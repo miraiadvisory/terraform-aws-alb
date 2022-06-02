@@ -2,6 +2,45 @@
 
 All notable changes to this project will be documented in this file.
 
+## [7.0.0](https://github.com/terraform-aws-modules/terraform-aws-alb/compare/v6.11.0...v7.0.0) (2022-05-23)
+
+
+### ⚠ BREAKING CHANGES
+
+* Upgraded Terraform version to 1.0+. Added wrappers. (#249)
+
+### Features
+
+* Upgraded Terraform version to 1.0+. Added wrappers. ([#249](https://github.com/terraform-aws-modules/terraform-aws-alb/issues/249)) ([25d31ee](https://github.com/terraform-aws-modules/terraform-aws-alb/commit/25d31ee31d3a29783568b31dc883eba52de14c9d))
+
+## [6.11.0](https://github.com/terraform-aws-modules/terraform-aws-alb/compare/v6.10.0...v6.11.0) (2022-05-20)
+
+
+### Features
+
+* Added support for lambda permissions when the target is a lambda function ([#240](https://github.com/terraform-aws-modules/terraform-aws-alb/issues/240)) ([e79573d](https://github.com/terraform-aws-modules/terraform-aws-alb/commit/e79573d0869ca91fb088e91bc8a3429ecc60c1f8))
+
+## [6.10.0](https://github.com/terraform-aws-modules/terraform-aws-alb/compare/v6.9.0...v6.10.0) (2022-04-21)
+
+
+### Features
+
+* Added missing `cookie_name` TG stickiness parameter support ([#245](https://github.com/terraform-aws-modules/terraform-aws-alb/issues/245)) ([a01b7ca](https://github.com/terraform-aws-modules/terraform-aws-alb/commit/a01b7cafa95b9770768a4430630ab0f88379fce8))
+
+## [6.9.0](https://github.com/terraform-aws-modules/terraform-aws-alb/compare/v6.8.0...v6.9.0) (2022-04-15)
+
+
+### Features
+
+* Added `weighted-forward` rules for HTTP ([#236](https://github.com/terraform-aws-modules/terraform-aws-alb/issues/236)) ([ba77760](https://github.com/terraform-aws-modules/terraform-aws-alb/commit/ba777608fce8a0fa5307222a9324fa54578ed437))
+
+## [6.8.0](https://github.com/terraform-aws-modules/terraform-aws-alb/compare/v6.7.0...v6.8.0) (2022-03-12)
+
+
+### Features
+
+* Made it clear that we stand with Ukraine ([34ba506](https://github.com/terraform-aws-modules/terraform-aws-alb/commit/34ba5062591068c77e2f8dc8c454284bbf039ddd))
+
 ## [6.7.0](https://github.com/terraform-aws-modules/terraform-aws-alb/compare/v6.6.1...v6.7.0) (2022-02-04)
 
 

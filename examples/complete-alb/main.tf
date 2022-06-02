@@ -13,8 +13,11 @@ data "aws_vpc" "default" {
   default = true
 }
 
-data "aws_subnet_ids" "all" {
-  vpc_id = data.aws_vpc.default.id
+data "aws_subnets" "all" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.default.id]
+  }
 }
 
 resource "random_pet" "this" {
@@ -38,21 +41,21 @@ module "security_group" {
   egress_rules        = ["all-all"]
 }
 
-# module "log_bucket" {
-#   source  = "terraform-aws-modules/s3-bucket/aws"
-#   version = "~> 1.0"
+#module "log_bucket" {
+#  source  = "terraform-aws-modules/s3-bucket/aws"
+#  version = "~> 3.0"
 #
-#   bucket                         = "logs-${random_pet.this.id}"
-#   acl                            = "log-delivery-write"
-#   force_destroy                  = true
-#   attach_elb_log_delivery_policy = true
-# }
+#  bucket                         = "logs-${random_pet.this.id}"
+#  acl                            = "log-delivery-write"
+#  force_destroy                  = true
+#  attach_elb_log_delivery_policy = true
+#}
 
 module "acm" {
   source  = "terraform-aws-modules/acm/aws"
   version = "~> 3.0"
 
-  domain_name = local.domain_name # trimsuffix(data.aws_route53_zone.this.name, ".") # Terraform >= 0.12.17
+  domain_name = local.domain_name # trimsuffix(data.aws_route53_zone.this.name, ".")
   zone_id     = data.aws_route53_zone.this.id
 }
 
@@ -90,7 +93,7 @@ module "alb" {
 
   vpc_id          = data.aws_vpc.default.id
   security_groups = [module.security_group.security_group_id]
-  subnets         = data.aws_subnet_ids.all.ids
+  subnets         = data.aws_subnets.all.ids
 
   #   # See notes in README (ref: https://github.com/terraform-providers/terraform-provider-aws/issues/7987)
   #   access_logs = {
@@ -316,6 +319,35 @@ module "alb" {
     },
     {
       http_tcp_listener_index = 0
+      priority                = 4
+
+      actions = [{
+        type = "weighted-forward"
+        target_groups = [
+          {
+            target_group_index = 1
+            weight             = 2
+          },
+          {
+            target_group_index = 0
+            weight             = 1
+          }
+        ]
+        stickiness = {
+          enabled  = true
+          duration = 3600
+        }
+      }]
+
+      conditions = [{
+        query_strings = [{
+          key   = "weighted"
+          value = "true"
+        }]
+      }]
+    },
+    {
+      http_tcp_listener_index = 0
       priority                = 5000
       actions = [{
         type        = "redirect"
@@ -373,13 +405,18 @@ module "alb" {
       target_type                        = "lambda"
       lambda_multi_value_headers_enabled = true
       targets = {
-        # Lambda function permission should be granted before
-        # it is used. There can be an error:
-        # NB: Error registering targets with target group:
-        # AccessDenied: elasticloadbalancing principal does not
-        # have permission to invoke ... from target group ...
-        my_lambda = {
-          target_id = module.lambda_function.lambda_function_arn
+        lambda_with_allowed_triggers = {
+          target_id = module.lambda_with_allowed_triggers.lambda_function_arn
+        }
+      }
+    },
+    {
+      name_prefix = "l2-"
+      target_type = "lambda"
+      targets = {
+        lambda_without_allowed_triggers = {
+          target_id                = module.lambda_without_allowed_triggers.lambda_function_arn
+          attach_lambda_permission = true
         }
       }
     },
@@ -468,12 +505,12 @@ resource "null_resource" "download_package" {
   }
 }
 
-module "lambda_function" {
+module "lambda_with_allowed_triggers" {
   source  = "terraform-aws-modules/lambda/aws"
-  version = "~> 2.0"
+  version = "~> 3.0"
 
-  function_name = "${random_pet.this.id}-lambda"
-  description   = "My awesome lambda function"
+  function_name = "${random_pet.this.id}-with-allowed-triggers"
+  description   = "My awesome lambda function (with allowed triggers)"
   handler       = "index.lambda_handler"
   runtime       = "python3.8"
 
@@ -488,6 +525,26 @@ module "lambda_function" {
       source_arn = module.alb.target_group_arns[1] # index should match the correct target_group
     }
   }
+
+  depends_on = [null_resource.download_package]
+}
+
+module "lambda_without_allowed_triggers" {
+  source  = "terraform-aws-modules/lambda/aws"
+  version = "~> 3.0"
+
+  function_name = "${random_pet.this.id}-without-allowed-triggers"
+  description   = "My awesome lambda function (without allowed triggers)"
+  handler       = "index.lambda_handler"
+  runtime       = "python3.8"
+
+  publish = true
+
+  create_package         = false
+  local_existing_package = local.downloaded
+
+  # Allowed triggers will be managed by ALB module
+  allowed_triggers = {}
 
   depends_on = [null_resource.download_package]
 }
