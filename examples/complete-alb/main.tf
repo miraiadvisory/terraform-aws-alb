@@ -58,7 +58,16 @@ module "alb" {
 
   access_logs = {
     bucket = module.log_bucket.s3_bucket_id
+    prefix = "access-logs"
   }
+
+  connection_logs = {
+    bucket  = module.log_bucket.s3_bucket_id
+    enabled = true
+    prefix  = "connection-logs"
+  }
+
+  client_keep_alive = 7200
 
   listeners = {
     ex-http-https-redirect = {
@@ -128,10 +137,14 @@ module "alb" {
           }]
 
           conditions = [{
-            query_string = {
+            query_string = [{
               key   = "video"
               value = "random"
-            }
+              },
+              {
+                key   = "image"
+                value = "next"
+            }]
           }]
         }
       }
@@ -241,6 +254,9 @@ module "alb" {
             query_string = {
               key   = "weighted"
               value = "true"
+            },
+            path_pattern = {
+              values = ["/some/path"]
             }
           }]
         }
@@ -352,7 +368,18 @@ module "alb" {
       port                              = 80
       target_type                       = "instance"
       deregistration_delay              = 10
+      load_balancing_algorithm_type     = "weighted_random"
+      load_balancing_anomaly_mitigation = "on"
       load_balancing_cross_zone_enabled = false
+
+      target_group_health = {
+        dns_failover = {
+          minimum_healthy_targets_count = 2
+        }
+        unhealthy_state_routing = {
+          minimum_healthy_targets_percentage = 50
+        }
+      }
 
       health_check = {
         enabled             = true
@@ -386,6 +413,15 @@ module "alb" {
       target_type              = "lambda"
       target_id                = module.lambda_without_allowed_triggers.lambda_function_arn
       attach_lambda_permission = true
+    }
+  }
+
+  additional_target_group_attachments = {
+    ex-instance-other = {
+      target_group_key = "ex-instance"
+      target_type      = "instance"
+      target_id        = aws_instance.other.id
+      port             = "80"
     }
   }
 
@@ -521,6 +557,12 @@ resource "aws_instance" "this" {
   subnet_id     = element(module.vpc.private_subnets, 0)
 }
 
+resource "aws_instance" "other" {
+  ami           = data.aws_ssm_parameter.al2.value
+  instance_type = "t3.nano"
+  subnet_id     = element(module.vpc.private_subnets, 0)
+}
+
 ##################################################################
 # AWS Cognito User Pool
 ##################################################################
@@ -539,8 +581,14 @@ resource "aws_cognito_user_pool_client" "this" {
   allowed_oauth_flows_user_pool_client = true
 }
 
+resource "random_string" "this" {
+  length  = 5
+  upper   = false
+  special = false
+}
+
 resource "aws_cognito_user_pool_domain" "this" {
-  domain       = local.name
+  domain       = "${local.name}-${random_string.this.result}"
   user_pool_id = aws_cognito_user_pool.this.id
 }
 

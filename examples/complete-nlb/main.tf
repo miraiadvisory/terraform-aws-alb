@@ -46,6 +46,7 @@ module "nlb" {
   enable_deletion_protection = false
 
   # Security Group
+  enforce_security_group_inbound_rules_on_private_link_traffic = "off"
   security_group_ingress_rules = {
     all_tcp = {
       from_port   = 80
@@ -91,8 +92,9 @@ module "nlb" {
     }
 
     ex-three = {
-      port     = 83
-      protocol = "TCP"
+      port                     = 83
+      protocol                 = "TCP"
+      tcp_idle_timeout_seconds = 60
       forward = {
         target_group_key = "ex-target-three"
       }
@@ -161,6 +163,7 @@ module "nlb" {
       target_id   = aws_instance.this.id
       target_health_state = {
         enable_unhealthy_connection_termination = false
+        unhealthy_draining_interval             = 600
       }
     }
   }
